@@ -4,8 +4,9 @@ import {
   findByEmail,
   getUser,
   updateUser,
-  getPreferences,
-  updatePreferences,
+  addFavoriteHouse,
+  getFavoriteHouses,
+  removeFavoriteHouse,
 } from "../controllers/userController";
 
 const router = Router();
@@ -17,8 +18,8 @@ router.get("/findByEmail", findByEmail);
 // 🔒 PROTECTED (nanti via gateway)
 router.get("/:id", getUser);
 router.put("/:id", updateUser);
-
-router.get("/:id/preferences", getPreferences);
-router.put("/:id/preferences", updatePreferences);
+router.post("/favorites", addFavoriteHouse);
+router.get("/:id/favorites", getFavoriteHouses);
+router.delete("/favorites/:userId/:houseId", removeFavoriteHouse);
 
 export default router;

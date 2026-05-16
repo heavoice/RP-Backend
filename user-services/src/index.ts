@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 // 🔗 route utama
-app.use("/users", userRoutes);
+app.use("/", userRoutes);
 
 // health check (biar gampang debug)
 app.get("/", (req, res) => {

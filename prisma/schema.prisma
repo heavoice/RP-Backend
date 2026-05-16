@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String?
+  birthDate DateTime?
+  gender    Gender?
+  createdAt DateTime @default(now())
+}
+
+model House {
+  id               Int      @id @default(autoincrement())
+  title            String
+  description      String?
+  location         String
+  landSize         Float
+  bedrooms         Int
+  bathrooms        Int
+  floors           Int
+  price            Float
+  certificate      String
+  propertyType     String
+  yearBuilt        Int
+  electricity      Int
+  hasGarage        Boolean
+  roadAccess       String
+  publicFacilities String?
+  distanceToCity   Float
+  ownerId          Int?
+  createdAt        DateTime @default(now())
+}
+
+model FavoriteHouse {
+  id               Int      @id @default(autoincrement())
+
+  userId           Int
+  houseId          Int
+
+  title            String
+  description      String?
+  location         String
+  landSize         Float
+  bedrooms         Int
+  bathrooms        Int
+  floors           Int
+  price            Float
+  certificate      String
+  propertyType     String
+  yearBuilt        Int
+  electricity      Int
+  hasGarage        Boolean
+  roadAccess       String
+  publicFacilities String?
+  distanceToCity   Float
+
+  createdAt        DateTime @default(now())
+
+  @@unique([userId, houseId])
+}

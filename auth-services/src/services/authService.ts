@@ -3,27 +3,49 @@ import bcrypt from "bcrypt";
 import { generateToken, generateRefreshToken } from "../utils/jwt";
 import "dotenv/config";
 
-const USER_SERVICE_URL = process.env.USER_SERVICE_URL!;
+const USER_SERVICE_URL = process.env.USER_SERVICE_URL!; // 🔥 HARDCODE DULU BUAT DEBUG
 console.log("USER_SERVICE_URL:", USER_SERVICE_URL);
 
 export const loginService = async (email: string, password: string) => {
-  // 🔥 ambil user dari user-service
-  const res = await axios.get(
-    `${USER_SERVICE_URL}/users/findByEmail?email=${email}`,
-  );
+  try {
+    console.log("🔥 LOGIN SERVICE HIT");
+    console.log("EMAIL:", email);
 
-  const user = res.data;
+    console.log("➡️ CALL USER SERVICE");
 
-  const isValid = await bcrypt.compare(password, user.password);
+    const res = await axios.get(`${USER_SERVICE_URL}/findByEmail`, {
+      params: { email }, // 🔥 JANGAN pakai query string manual
+      timeout: 5000, // 🔥 WAJIB biar ga hang
+    });
 
-  if (!isValid) throw new Error("Invalid password");
+    console.log("✅ USER SERVICE RESPONSE RECEIVED");
 
-  const token = generateToken({ userId: user.id });
-  const refreshToken = generateRefreshToken({ userId: user.id });
+    const user = res.data;
 
-  return {
-    token,
-    refreshToken,
-    userId: user.id,
-  };
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    console.log("➡️ CHECK PASSWORD");
+
+    const isValid = await bcrypt.compare(password, user.password);
+
+    if (!isValid) throw new Error("Invalid password");
+
+    console.log("✅ PASSWORD VALID");
+
+    const token = generateToken({ userId: user.id });
+    const refreshToken = generateRefreshToken({ userId: user.id });
+
+    console.log("✅ TOKEN GENERATED");
+
+    return {
+      token,
+      refreshToken,
+      userId: user.id,
+    };
+  } catch (err: any) {
+    console.error("❌ LOGIN SERVICE ERROR:", err.message);
+    throw err;
+  }
 };

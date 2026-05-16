@@ -1,11 +1,23 @@
 import { Request, Response } from "express";
 import { prisma } from "../prisma";
+import { Gender } from "@prisma/client";
+import axios from "axios";
 import bcrypt from "bcrypt";
+import "dotenv/config";
+
+// helper mapping gender
+const mapGender = (value?: string): Gender | null => {
+  if (value === "lk") return Gender.MALE;
+  if (value === "pr") return Gender.FEMALE;
+  return null;
+};
+
+const HOUSE_SERVICE_URL = process.env.HOUSE_SERVICE_URL!;
 
 // ✅ REGISTER
 export const register = async (req: Request, res: Response) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, phone, birthDate, gender } = req.body;
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -14,11 +26,19 @@ export const register = async (req: Request, res: Response) => {
         name,
         email,
         password: hashedPassword,
+        phone,
+        birthDate: birthDate ? new Date(birthDate) : null,
+        gender: mapGender(gender) ?? null,
       },
     });
 
     res.json({
       id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      birthDate: user.birthDate,
+      gender: user.gender,
       createdAt: user.createdAt,
     });
   } catch (err) {
@@ -29,6 +49,7 @@ export const register = async (req: Request, res: Response) => {
 
 // ✅ FIND BY EMAIL (dipakai Auth Service)
 export const findByEmail = async (req: Request, res: Response) => {
+  console.log("🔥 USER SERVICE HIT FIND BY EMAIL");
   try {
     const { email } = req.query;
 
@@ -53,7 +74,6 @@ export const getUser = async (req: Request, res: Response) => {
 
     const user = await prisma.user.findUnique({
       where: { id: Number(id) },
-      include: { preferences: true },
     });
 
     res.json(user);
@@ -79,47 +99,132 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ GET PREFERENCES
-export const getPreferences = async (req: Request, res: Response) => {
+export const addFavoriteHouse = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const userId = Number(req.headers["x-user-id"]);
 
-    const pref = await prisma.preference.findUnique({
-      where: { userId: Number(id) },
+    let houseIds: number[] = [];
+
+    // 🔥 SUPPORT SINGLE
+    if (req.body.houseId) {
+      houseIds = [Number(req.body.houseId)];
+    }
+
+    // 🔥 SUPPORT MULTIPLE
+    if (req.body.houseIds) {
+      houseIds = req.body.houseIds.map((id: any) => Number(id));
+    }
+
+    if (houseIds.length === 0) {
+      return res.status(400).json({
+        error: "houseId or houseIds is required",
+      });
+    }
+
+    const results = [];
+
+    for (const houseId of houseIds) {
+      const existing = await prisma.favoriteHouse.findFirst({
+        where: {
+          userId,
+          houseId,
+        },
+      });
+
+      if (existing) continue;
+
+      const houseRes = await axios.get(
+        `${HOUSE_SERVICE_URL}/houses/${houseId}`,
+      );
+
+      const house = houseRes.data;
+
+      const favorite = await prisma.favoriteHouse.create({
+        data: {
+          userId,
+          houseId,
+
+          title: house.title,
+          description: house.description,
+          location: house.location,
+          landSize: house.landSize,
+          bedrooms: house.bedrooms,
+          bathrooms: house.bathrooms,
+          floors: house.floors,
+          price: house.price,
+          certificate: house.certificate,
+          propertyType: house.propertyType,
+          yearBuilt: house.yearBuilt,
+          electricity: house.electricity,
+          hasGarage: house.hasGarage,
+          roadAccess: house.roadAccess,
+          publicFacilities: house.publicFacilities,
+          distanceToCity: house.distanceToCity,
+        },
+      });
+
+      results.push(favorite);
+    }
+
+    return res.json(results);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      error: "Failed to add favorite",
     });
-
-    res.json(pref);
-  } catch {
-    res.status(500).json({ error: "Failed to fetch preferences" });
   }
 };
 
-// ✅ UPDATE PREFERENCES
-export const updatePreferences = async (req: Request, res: Response) => {
+// ✅ GET FAVORITE HOUSE FROM USER
+export const getFavoriteHouses = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { location, minPrice, maxPrice, bedrooms } = req.body;
 
-    const pref = await prisma.preference.upsert({
-      where: { userId: Number(id) },
-      update: {
-        location,
-        minPrice,
-        maxPrice,
-        bedrooms,
-      },
-      create: {
+    const favorites = await prisma.favoriteHouse.findMany({
+      where: {
         userId: Number(id),
-        location,
-        minPrice,
-        maxPrice,
-        bedrooms,
+      },
+
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
-    res.json(pref);
+    res.json(favorites);
   } catch {
-    res.status(500).json({ error: "Failed to update preferences" });
+    res.status(500).json({
+      error: "Failed to get favorites",
+    });
+  }
+};
+
+// ✅ REMOVE FAVORITE HOUSE FROM USER
+export const removeFavoriteHouse = async (req: Request, res: Response) => {
+  try {
+    const userId = Number(req.params.userId);
+    const houseId = Number(req.params.houseId);
+
+    const deleted = await prisma.favoriteHouse.deleteMany({
+      where: {
+        userId,
+        houseId,
+      },
+    });
+
+    if (deleted.count === 0) {
+      return res.status(404).json({
+        error: "Favorite not found",
+      });
+    }
+
+    res.json({
+      deleted: true,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: "Failed to delete favorite",
+    });
   }
 };
 
@@ -128,6 +233,7 @@ module.exports = {
   findByEmail,
   getUser,
   updateUser,
-  getPreferences,
-  updatePreferences,
+  addFavoriteHouse,
+  getFavoriteHouses,
+  removeFavoriteHouse,
 };
