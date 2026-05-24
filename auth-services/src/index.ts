@@ -12,6 +12,4 @@ app.get("/", (req, res) => {
   res.send("Auth Service is running 🚀");
 });
 
-app.listen(5001, () => {
-  console.log("Auth Service running on 5001");
-});
+export default app;

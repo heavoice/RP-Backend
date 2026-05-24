@@ -1,21 +1,24 @@
 import express from "express";
 import cors from "cors";
 import "dotenv/config";
-import houseRoutes from "./routes/houseRoutes";
+
+import searchRoutes from "./routes/searchRoutes";
 
 const app = express();
+
 const PORT = process.env.PORT;
 
 app.use(cors());
 app.use(express.json());
 
-app.use("/houses", houseRoutes);
+app.use("/search", searchRoutes);
 
 app.get("/", (req, res) => {
-  res.send("House Service is running 🚀");
+  res.send("Search Service is running 🚀");
 });
 
 app.listen(PORT, () => {
-  console.log(`House Service running on ${PORT}`);
+  console.log(`Search Service running on ${PORT}`);
 });
+
 export default app;

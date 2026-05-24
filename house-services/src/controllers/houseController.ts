@@ -26,21 +26,45 @@ export const createHouse = async (req: Request, res: Response) => {
 
 // GET ALL HOUSES
 export const getHouses = async (req: Request, res: Response) => {
+  console.log("🔥 GET HOUSES HIT");
+
   try {
+    console.log("➡️ BEFORE QUERY");
+
     const houses = await prisma.house.findMany({
       select: {
         id: true,
         title: true,
-        price: true,
+        description: true,
         location: true,
+        landSize: true,
         bedrooms: true,
         bathrooms: true,
+        floors: true,
+        price: true,
+        certificate: true,
         propertyType: true,
+        yearBuilt: true,
+        electricity: true,
+        hasGarage: true,
+        roadAccess: true,
+        publicFacilities: true,
+        distanceToCity: true,
+        ownerId: true,
+        createdAt: true,
       },
     });
 
+    console.log("✅ QUERY SUCCESS");
+
+    console.log(houses);
+
     res.json(houses);
-  } catch {
+  } catch (err) {
+    console.error("❌ GET HOUSES ERROR:");
+
+    console.error(err);
+
     res.status(500).json({
       error: "Failed to retrieve houses",
     });

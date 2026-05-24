@@ -6,6 +6,7 @@ import authProxy from "./proxies/authProxy";
 import userProxy from "./proxies/userProxy";
 import houseProxy from "./proxies/houseProxy";
 import { authMiddleware } from "./middleware/authMiddleware";
+import searchProxy from "./proxies/searchProxy";
 
 const app = express();
 
@@ -34,9 +35,9 @@ app.use("/auth", authProxy);
 app.use("/users", authMiddleware, userProxy);
 // 🔒 protected routes
 app.use("/houses", authMiddleware, houseProxy);
+// 🔒 protected routes
+app.use("/search", authMiddleware, searchProxy);
 
 const port = process.env.PORT || 5000;
 
-app.listen(port, () => {
-  console.log(`🚀 Gateway running on http://localhost:${port}`);
-});
+export default app;

@@ -1,10 +1,10 @@
 {
-  "name": "backend",
+  "name": "auth-services",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev src/index.ts",
+    "dev": "nodemon src/local.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "prisma": "prisma"

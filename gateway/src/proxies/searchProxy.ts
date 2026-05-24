@@ -1,15 +1,15 @@
 import express from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
 
-const houseProxy = [
+const searchProxy = [
   express.json(),
 
   createProxyMiddleware({
-    target: process.env.HOUSE_SERVICE_URL,
+    target: process.env.SEARCH_SERVICE_URL,
     changeOrigin: true,
 
     pathRewrite: (path) => {
-      return "/houses" + path;
+      return "/search" + path;
     },
 
     proxyTimeout: 5000,
@@ -17,7 +17,7 @@ const houseProxy = [
 
     on: {
       proxyReq: (proxyReq, req: any) => {
-        console.log("🏠 HOUSE PROXY:", req.method, req.originalUrl);
+        console.log("🏠 SEARCH PROXY:", req.method, req.originalUrl);
 
         // FORWARD USER ID
         if (req.user?.userId) {
@@ -35,14 +35,14 @@ const houseProxy = [
       },
 
       proxyRes: () => {
-        console.log("✅ Response from house-service");
+        console.log("✅ Response from search-service");
       },
 
       error: (err) => {
-        console.error("❌ House Proxy Error:", err);
+        console.error("❌ Search Proxy Error:", err);
       },
     },
   }),
 ];
 
-export default houseProxy;
+export default searchProxy;

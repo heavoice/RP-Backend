@@ -22,6 +22,4 @@ app.use((req, res, next) => {
   next();
 });
 
-app.listen(PORT, () => {
-  console.log(`User Service running on ${PORT}`);
-});
+export default app;
