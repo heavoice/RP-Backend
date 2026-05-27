@@ -105,12 +105,12 @@ export const addFavoriteHouse = async (req: Request, res: Response) => {
 
     let houseIds: number[] = [];
 
-    // 🔥 SUPPORT SINGLE
+    // SUPPORT SINGLE
     if (req.body.houseId) {
       houseIds = [Number(req.body.houseId)];
     }
 
-    // 🔥 SUPPORT MULTIPLE
+    // SUPPORT MULTIPLE
     if (req.body.houseIds) {
       houseIds = req.body.houseIds.map((id: any) => Number(id));
     }
@@ -124,42 +124,31 @@ export const addFavoriteHouse = async (req: Request, res: Response) => {
     const results = [];
 
     for (const houseId of houseIds) {
-      const existing = await prisma.favoriteHouse.findFirst({
+      // cek sudah favorite atau belum
+      const existing = await prisma.favoriteHouse.findUnique({
         where: {
-          userId,
-          houseId,
+          userId_houseId: {
+            userId,
+            houseId,
+          },
         },
       });
 
-      if (existing) continue;
+      if (existing) {
+        continue;
+      }
 
-      const houseRes = await axios.get(
-        `${HOUSE_SERVICE_URL}/houses/${houseId}`,
-      );
+      // validasi house exists
+      await axios.get(`${HOUSE_SERVICE_URL}/houses/${houseId}`);
 
-      const house = houseRes.data;
-
+      // create favorite
       const favorite = await prisma.favoriteHouse.create({
         data: {
           userId,
           houseId,
-
-          title: house.title,
-          description: house.description,
-          location: house.location,
-          landSize: house.landSize,
-          bedrooms: house.bedrooms,
-          bathrooms: house.bathrooms,
-          floors: house.floors,
-          price: house.price,
-          certificate: house.certificate,
-          propertyType: house.propertyType,
-          yearBuilt: house.yearBuilt,
-          electricity: house.electricity,
-          hasGarage: house.hasGarage,
-          roadAccess: house.roadAccess,
-          publicFacilities: house.publicFacilities,
-          distanceToCity: house.distanceToCity,
+        },
+        include: {
+          house: true,
         },
       });
 
@@ -169,6 +158,7 @@ export const addFavoriteHouse = async (req: Request, res: Response) => {
     return res.json(results);
   } catch (err) {
     console.error(err);
+
     return res.status(500).json({
       error: "Failed to add favorite",
     });
@@ -178,21 +168,22 @@ export const addFavoriteHouse = async (req: Request, res: Response) => {
 // ✅ GET FAVORITE HOUSE FROM USER
 export const getFavoriteHouses = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const userId = Number(req.params.id);
 
     const favorites = await prisma.favoriteHouse.findMany({
       where: {
-        userId: Number(id),
+        userId,
       },
-
-      orderBy: {
-        createdAt: "desc",
+      include: {
+        house: true,
       },
     });
 
-    res.json(favorites);
-  } catch {
-    res.status(500).json({
+    return res.json(favorites);
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
       error: "Failed to get favorites",
     });
   }
@@ -228,12 +219,105 @@ export const removeFavoriteHouse = async (req: Request, res: Response) => {
   }
 };
 
-module.exports = {
-  register,
-  findByEmail,
-  getUser,
-  updateUser,
-  addFavoriteHouse,
-  getFavoriteHouses,
-  removeFavoriteHouse,
+// ✅ CREATE BOOKING
+export const createBooking = async (req: Request, res: Response) => {
+  try {
+    const userId = Number(req.headers["x-user-id"]);
+    const houseId = Number(req.body.houseId);
+    const notes = req.body.notes;
+
+    if (!houseId) {
+      return res.status(400).json({
+        error: "houseId is required",
+      });
+    }
+
+    // cek house exists (MS call)
+    const houseRes = await axios.get(`${HOUSE_SERVICE_URL}/houses/${houseId}`);
+
+    const house = houseRes.data;
+
+    // cek booking aktif
+    const existing = await prisma.booking.findFirst({
+      where: {
+        houseId,
+        status: {
+          in: ["PENDING", "CONFIRMED"],
+        },
+      },
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        error: "House already booked",
+      });
+    }
+
+    const booking = await prisma.booking.create({
+      data: {
+        userId,
+        houseId,
+        bookingDate: new Date(),
+        notes: notes || null,
+      },
+      include: {
+        house: true,
+      },
+    });
+
+    return res.json(booking);
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      error: "Failed to create booking",
+    });
+  }
+};
+
+// ✅ GET USER BOOKINGS
+export const getBookings = async (req: Request, res: Response) => {
+  try {
+    const userId = Number(req.params.userId);
+
+    const bookings = await prisma.booking.findMany({
+      where: {
+        userId,
+      },
+      include: {
+        house: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return res.json(bookings);
+  } catch (err: any) {
+    console.error("🔥 CREATE BOOKING ERROR:");
+    console.error(err?.response?.data || err);
+
+    return res.status(500).json({
+      error: "Failed to create booking",
+      detail: err?.response?.data || err?.message,
+    });
+  }
+};
+
+// ✅ CONFIRM BOOKING (called from Payment Service after payment success)
+export const confirmBooking = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+
+    const booking = await prisma.booking.update({
+      where: { id },
+      data: {
+        status: "CONFIRMED",
+      },
+    });
+
+    return res.json(booking);
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to confirm booking" });
+  }
 };

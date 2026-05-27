@@ -21,6 +21,9 @@ model User {
   birthDate DateTime?
   gender    Gender?
   createdAt DateTime @default(now())
+
+  favorites FavoriteHouse[]
+  houses    House[] @relation("UserHouses")
 }
 
 model House {
@@ -43,32 +46,18 @@ model House {
   distanceToCity   Float
   ownerId          Int?
   createdAt        DateTime @default(now())
+  owner     User? @relation("UserHouses", fields: [ownerId], references: [id], onDelete: SetNull)
+  favorites FavoriteHouse[]
 }
 
 model FavoriteHouse {
-  id               Int      @id @default(autoincrement())
+  userId  Int
+  houseId Int
 
-  userId           Int
-  houseId          Int
+  createdAt DateTime @default(now())
 
-  title            String
-  description      String?
-  location         String
-  landSize         Float
-  bedrooms         Int
-  bathrooms        Int
-  floors           Int
-  price            Float
-  certificate      String
-  propertyType     String
-  yearBuilt        Int
-  electricity      Int
-  hasGarage        Boolean
-  roadAccess       String
-  publicFacilities String?
-  distanceToCity   Float
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  house House @relation(fields: [houseId], references: [id], onDelete: Cascade)
 
-  createdAt        DateTime @default(now())
-
-  @@unique([userId, houseId])
+  @@id([userId, houseId])
 }

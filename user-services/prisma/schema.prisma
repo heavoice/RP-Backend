@@ -12,6 +12,27 @@ enum Gender {
   FEMALE
 }
 
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CREDIT_CARD
+  E_WALLET
+  CASH
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   name      String
@@ -21,6 +42,11 @@ model User {
   birthDate DateTime?
   gender    Gender?
   createdAt DateTime @default(now())
+
+  favorites FavoriteHouse[]
+  houses    House[] @relation("UserHouses")
+  bookings  Booking[]
+  payments  Payment[]
 }
 
 model House {
@@ -41,34 +67,62 @@ model House {
   roadAccess       String
   publicFacilities String?
   distanceToCity   Float
-  ownerId          Int?
-  createdAt        DateTime @default(now())
+
+  ownerId Int?
+
+  createdAt DateTime @default(now())
+
+  owner     User? @relation("UserHouses", fields: [ownerId], references: [id], onDelete: SetNull)
+  favorites FavoriteHouse[]
+  bookings  Booking[]
 }
 
 model FavoriteHouse {
-  id               Int      @id @default(autoincrement())
+  userId  Int
+  houseId Int
 
-  userId           Int
-  houseId          Int
+  createdAt DateTime @default(now())
 
-  title            String
-  description      String?
-  location         String
-  landSize         Float
-  bedrooms         Int
-  bathrooms        Int
-  floors           Int
-  price            Float
-  certificate      String
-  propertyType     String
-  yearBuilt        Int
-  electricity      Int
-  hasGarage        Boolean
-  roadAccess       String
-  publicFacilities String?
-  distanceToCity   Float
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  house House @relation(fields: [houseId], references: [id], onDelete: Cascade)
 
-  createdAt        DateTime @default(now())
+  @@id([userId, houseId])
+}
 
-  @@unique([userId, houseId])
+model Booking {
+  id Int @id @default(autoincrement())
+
+  userId  Int
+  houseId Int
+
+  bookingDate DateTime
+  status      BookingStatus @default(PENDING)
+  notes       String?
+
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  house House @relation(fields: [houseId], references: [id], onDelete: Cascade)
+
+  payments Payment[]
+}
+
+model Payment {
+  id Int @id @default(autoincrement())
+
+  bookingId Int
+  userId    Int
+
+  amount Float
+
+  method PaymentMethod
+  status PaymentStatus @default(PENDING)
+
+  transactionId String?
+
+  paidAt    DateTime?
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

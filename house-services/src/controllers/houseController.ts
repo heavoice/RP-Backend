@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-
 import { getHousePhotos } from "../services/mediaServices";
 
 const prisma = new PrismaClient();

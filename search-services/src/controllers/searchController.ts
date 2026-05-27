@@ -6,8 +6,10 @@ const HOUSE_SERVICE_URL = process.env.HOUSE_SERVICE_URL!;
 export const searchHouses = async (req: Request, res: Response) => {
   try {
     const { priceMin, priceMax, bedrooms, location, sortBy } = req.query;
+    console.log("🔥 SEARCH HIT");
     // GET ALL HOUSES
     const response = await axios.get(`${HOUSE_SERVICE_URL}/houses`);
+    console.log("HOUSE URL:", HOUSE_SERVICE_URL);
     let houses = response.data;
     // FILTER PRICE MIN
     if (priceMin) {
