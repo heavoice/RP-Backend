@@ -7,13 +7,14 @@ import userProxy from "./proxies/userProxy";
 import houseProxy from "./proxies/houseProxy";
 import { authMiddleware } from "./middleware/authMiddleware";
 import searchProxy from "./proxies/searchProxy";
+import paymentProxy from "./proxies/paymentProxy";
 
 const app = express();
 
 app.use(
   cors({
     origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
   }),
 );
@@ -37,6 +38,8 @@ app.use("/users", authMiddleware, userProxy);
 app.use("/houses", authMiddleware, houseProxy);
 // 🔒 protected routes
 app.use("/search", authMiddleware, searchProxy);
+// 🔒 protected routes
+app.use("/payments", authMiddleware, paymentProxy);
 
 const port = process.env.PORT || 5000;
 

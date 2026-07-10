@@ -5,10 +5,20 @@ services:
     build: ./gateway
     ports:
       - "5000:5000"
+    env_file:
+      - ./gateway/.env
     depends_on:
       - auth
+      - user
+      - house
+      - search
+      - payment
     environment:
       - AUTH_SERVICE_URL=http://auth:5001
+      - USER_SERVICE_URL=http://user:5002
+      - HOUSE_SERVICE_URL=http://house:5003
+      - SEARCH_SERVICE_URL=http://search:5004
+      - PAYMENT_SERVICE_URL=http://payment:5005
 
   auth:
     build: ./auth-services
@@ -16,3 +26,31 @@ services:
       - "5001:5001"
     env_file:
       - ./auth-services/.env
+
+  user:
+    build: ./user-services
+    ports:
+      - "5002:5002"
+    env_file:
+      - ./user-services/.env
+
+  house:
+    build: ./house-services
+    ports:
+      - "5003:5003"
+    env_file:
+      - ./house-services/.env
+
+  search:
+    build: ./search-services
+    ports:
+      - "5004:5004"
+    env_file:
+      - ./search-services/.env
+
+  payment:
+    build: ./payment-services
+    ports:
+      - "5005:5005"
+    env_file:
+      - ./payment-services/.env
