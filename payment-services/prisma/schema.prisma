@@ -16,7 +16,7 @@ enum BookingStatus {
   PENDING
   CONFIRMED
   CANCELLED
-  COMPLETED
+  EXPIRED
 }
 
 enum PaymentStatus {
@@ -98,7 +98,9 @@ model Booking {
   bookingDate DateTime
   status      BookingStatus @default(PENDING)
   notes       String?
-
+  expiresAt   DateTime
+  paidAt      DateTime?
+  updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -122,6 +124,8 @@ model Payment {
 
   paidAt    DateTime?
   createdAt DateTime @default(now())
+  snapToken    String?
+  redirectUrl  String?
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
