@@ -47,6 +47,7 @@ model User {
   houses    House[] @relation("UserHouses")
   bookings  Booking[]
   payments  Payment[]
+  media     Media[]
 }
 
 model House {
@@ -75,6 +76,7 @@ model House {
   owner     User? @relation("UserHouses", fields: [ownerId], references: [id], onDelete: SetNull)
   favorites FavoriteHouse[]
   bookings  Booking[]
+  media     Media[]
 }
 
 model FavoriteHouse {
@@ -124,7 +126,23 @@ model Payment {
 
   paidAt    DateTime?
   createdAt DateTime @default(now())
+  snapToken    String?
+  redirectUrl  String?
 
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Media {
+  id        Int      @id @default(autoincrement())
+  url       String
+  publicId  String
+  
+  houseId   Int?
+  userId    Int?
+  
+  createdAt DateTime @default(now())
+
+  house     House?   @relation(fields: [houseId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

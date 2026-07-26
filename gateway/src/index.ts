@@ -8,6 +8,7 @@ import houseProxy from "./proxies/houseProxy";
 import { authMiddleware } from "./middleware/authMiddleware";
 import searchProxy from "./proxies/searchProxy";
 import paymentProxy from "./proxies/paymentProxy";
+import mediaProxy from "./proxies/mediaProxy";
 
 const app = express();
 
@@ -40,6 +41,8 @@ app.use("/houses", authMiddleware, houseProxy);
 app.use("/search", authMiddleware, searchProxy);
 // 🔒 protected routes
 app.use("/payments", authMiddleware, paymentProxy);
+// 🔒 protected routes
+app.use("/media", authMiddleware, mediaProxy);
 
 const port = process.env.PORT || 5000;
 

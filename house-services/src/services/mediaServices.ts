@@ -1,12 +1,15 @@
+import axios from "axios";
+
+const MEDIA_SERVICE_URL = process.env.MEDIA_SERVICE_URL;
+
 export const getHousePhotos = async (houseId: number) => {
-  return [
-    {
-      id: 1,
-      url: `https://picsum.photos/200?random=${houseId}`,
-    },
-    {
-      id: 2,
-      url: `https://picsum.photos/200?random=${houseId + 1}`,
-    },
-  ];
+  try {
+    const response = await axios.get(`${MEDIA_SERVICE_URL}/houses/${houseId}`);
+
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get house photos:", error);
+
+    return [];
+  }
 };

@@ -4,6 +4,16 @@ import { getHousePhotos } from "../services/mediaServices";
 
 const prisma = new PrismaClient();
 
+// Helper
+const formatHouse = async (house: any) => {
+  const photos = await getHousePhotos(house.id);
+
+  return {
+    ...house,
+    photos,
+  };
+};
+
 // CREATE HOUSE
 export const createHouse = async (req: Request, res: Response) => {
   try {
@@ -16,7 +26,8 @@ export const createHouse = async (req: Request, res: Response) => {
       createdAt: house.createdAt,
     });
   } catch (err) {
-    console.error("Error creating house:", err);
+    console.error(err);
+
     res.status(500).json({
       error: "Failed to create house",
     });
@@ -25,46 +36,20 @@ export const createHouse = async (req: Request, res: Response) => {
 
 // GET ALL HOUSES
 export const getHouses = async (req: Request, res: Response) => {
-  console.log("🔥 GET HOUSES HIT");
-
   try {
-    console.log("➡️ BEFORE QUERY");
-
     const houses = await prisma.house.findMany({
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        location: true,
-        landSize: true,
-        bedrooms: true,
-        bathrooms: true,
-        floors: true,
-        price: true,
-        certificate: true,
-        propertyType: true,
-        yearBuilt: true,
-        electricity: true,
-        hasGarage: true,
-        roadAccess: true,
-        publicFacilities: true,
-        distanceToCity: true,
-        ownerId: true,
-        createdAt: true,
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
-    console.log("✅ QUERY SUCCESS");
+    const result = await Promise.all(houses.map((house) => formatHouse(house)));
 
-    console.log(houses);
-
-    res.json(houses);
+    return res.json(result);
   } catch (err) {
-    console.error("❌ GET HOUSES ERROR:");
-
     console.error(err);
 
-    res.status(500).json({
+    return res.status(500).json({
       error: "Failed to retrieve houses",
     });
   }
@@ -76,7 +61,9 @@ export const getHouseDetail = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
 
     const house = await prisma.house.findUnique({
-      where: { id },
+      where: {
+        id,
+      },
     });
 
     if (!house) {
@@ -85,15 +72,11 @@ export const getHouseDetail = async (req: Request, res: Response) => {
       });
     }
 
-    // Simulasi media-service
-    const photos = await getHousePhotos(id);
+    return res.json(await formatHouse(house));
+  } catch (err) {
+    console.error(err);
 
-    res.json({
-      ...house,
-      photos,
-    });
-  } catch {
-    res.status(500).json({
+    return res.status(500).json({
       error: "Failed to retrieve house detail",
     });
   }
@@ -105,15 +88,19 @@ export const updateHouse = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
 
     await prisma.house.update({
-      where: { id },
+      where: {
+        id,
+      },
       data: req.body,
     });
 
-    res.json({
+    return res.json({
       updated: true,
     });
-  } catch {
-    res.status(500).json({
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
       error: "Failed to update house",
     });
   }
@@ -125,14 +112,18 @@ export const deleteHouse = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
 
     await prisma.house.delete({
-      where: { id },
+      where: {
+        id,
+      },
     });
 
-    res.json({
+    return res.json({
       deleted: true,
     });
-  } catch {
-    res.status(500).json({
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
       error: "Failed to delete house",
     });
   }

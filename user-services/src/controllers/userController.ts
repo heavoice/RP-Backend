@@ -5,13 +5,50 @@ import "dotenv/config";
 // ✅ GET USER PROFILE
 export const getUser = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = Number(req.params.id);
 
     const user = await prisma.user.findUnique({
-      where: { id: Number(id) },
+      where: {
+        id,
+      },
+      include: {
+        media: {
+          select: {
+            id: true,
+            url: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 1,
+        },
+      },
     });
 
-    return res.json(user);
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
+
+    const profilePhoto = user.media.at(0);
+
+    return res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      birthDate: user.birthDate,
+      gender: user.gender,
+      createdAt: user.createdAt,
+
+      profilePhoto: profilePhoto
+        ? {
+            mediaId: profilePhoto.id,
+            url: profilePhoto.url,
+          }
+        : null,
+    });
   } catch (err) {
     console.error("❌ REAL ERROR getUser:", err);
 
@@ -29,12 +66,23 @@ export const updateUser = async (req: Request, res: Response) => {
     const { name } = req.body;
 
     const user = await prisma.user.update({
-      where: { id: Number(id) },
-      data: { name },
+      where: {
+        id: Number(id),
+      },
+      data: {
+        name,
+      },
     });
 
-    res.json({ message: "Updated", user });
-  } catch {
-    res.status(500).json({ error: "Update failed" });
+    return res.json({
+      message: "Updated",
+      user,
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      error: "Update failed",
+    });
   }
 };

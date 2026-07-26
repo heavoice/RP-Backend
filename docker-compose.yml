@@ -13,12 +13,14 @@ services:
       - house
       - search
       - payment
+      - media
     environment:
       - AUTH_SERVICE_URL=http://auth:5001
       - USER_SERVICE_URL=http://user:5002
       - HOUSE_SERVICE_URL=http://house:5003
       - SEARCH_SERVICE_URL=http://search:5004
       - PAYMENT_SERVICE_URL=http://payment:5005
+      - MEDIA_SERVICE_URL=http://media:5006
 
   auth:
     build: ./auth-services
@@ -54,3 +56,10 @@ services:
       - "5005:5005"
     env_file:
       - ./payment-services/.env
+
+  media:
+    build: ./media-services
+    ports:
+      - "5006:5006"
+    env_file:
+      - ./media-services/.env
