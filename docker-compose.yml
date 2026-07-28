@@ -21,45 +21,46 @@ services:
       - SEARCH_SERVICE_URL=http://search:5004
       - PAYMENT_SERVICE_URL=http://payment:5005
       - MEDIA_SERVICE_URL=http://media:5006
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN before starting Docker Compose}
 
   auth:
     build: ./auth-services
-    ports:
-      - "5001:5001"
     env_file:
       - ./auth-services/.env
+    environment:
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN before starting Docker Compose}
 
   user:
     build: ./user-services
-    ports:
-      - "5002:5002"
     env_file:
       - ./user-services/.env
+    environment:
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN before starting Docker Compose}
 
   house:
     build: ./house-services
-    ports:
-      - "5003:5003"
     env_file:
       - ./house-services/.env
+    environment:
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN before starting Docker Compose}
 
   search:
     build: ./search-services
-    ports:
-      - "5004:5004"
     env_file:
       - ./search-services/.env
+    environment:
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN before starting Docker Compose}
 
   payment:
     build: ./payment-services
-    ports:
-      - "5005:5005"
     env_file:
       - ./payment-services/.env
+    environment:
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN before starting Docker Compose}
 
   media:
     build: ./media-services
-    ports:
-      - "5006:5006"
     env_file:
       - ./media-services/.env
+    environment:
+      - INTERNAL_SERVICE_TOKEN=${INTERNAL_SERVICE_TOKEN:?Set INTERNAL_SERVICE_TOKEN before starting Docker Compose}

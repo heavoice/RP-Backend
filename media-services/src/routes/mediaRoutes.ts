@@ -1,9 +1,10 @@
 import { Router } from "express";
 import multer from "multer";
 import {
-  uploadMedia,
   getMediaByHouse,
   getProfileMedia,
+  uploadHouseMedia,
+  uploadProfileMedia,
 } from "../controllers/mediaController";
 
 const router = Router();
@@ -16,7 +17,12 @@ const upload = multer({
   },
 });
 
-router.post("/upload", upload.single("image"), uploadMedia);
+router.post(
+  "/houses/upload",
+  upload.single("image"),
+  uploadHouseMedia,
+);
+router.post("/profiles/upload", upload.single("image"), uploadProfileMedia);
 router.get("/houses/:id", getMediaByHouse);
 router.get("/profiles/:id", getProfileMedia);
 

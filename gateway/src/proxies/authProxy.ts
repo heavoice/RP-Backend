@@ -1,4 +1,5 @@
 import { createProxyMiddleware } from "http-proxy-middleware";
+import { getInternalServiceToken } from "../utils/internalToken";
 
 const authProxy = createProxyMiddleware({
   target: process.env.AUTH_SERVICE_URL,
@@ -11,6 +12,7 @@ const authProxy = createProxyMiddleware({
 
   on: {
     proxyReq: (proxyReq, req: any) => {
+      proxyReq.setHeader("x-internal-token", getInternalServiceToken());
       console.log("➡️ AUTH PROXY:", req.method, req.originalUrl);
     },
 

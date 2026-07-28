@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import axios from "axios";
+import { getInternalServiceToken } from "../utils/internalToken";
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL!;
 
@@ -39,11 +40,15 @@ export const authMiddleware = async (
     console.log("🔐 TOKEN CHECK:", token);
 
     // ✅ VERIFY TOKEN VIA AUTH SERVICE
-    const response = await axios.post(`${AUTH_SERVICE_URL}/verify`, {
-      token,
-    });
-
-    console.log("✅ AUTH RESPONSE:", response.data);
+    const response = await axios.post(
+      `${AUTH_SERVICE_URL}/verify`,
+      { token },
+      {
+        headers: {
+          "x-internal-token": getInternalServiceToken(),
+        },
+      },
+    );
 
     // ✅ EXTRACT USER ID
     const userId = response.data.userId || response.data.data?.userId;

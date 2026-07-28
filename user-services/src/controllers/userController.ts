@@ -62,27 +62,56 @@ export const getUser = async (req: Request, res: Response) => {
 // ✅ UPDATE USER
 export const updateUser = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const { name } = req.body;
+    const id = Number(req.params.id);
+    const authenticatedUserId = Number(req.headers["x-user-id"]);
+
+    if (!authenticatedUserId) {
+      return res.status(401).json({
+        error: "Unauthorized",
+      });
+    }
+
+    // User hanya boleh mengubah profil miliknya sendiri
+    if (authenticatedUserId !== id) {
+      return res.status(403).json({
+        error: "Forbidden",
+      });
+    }
+
+    const { name, phone, birthDate, gender } = req.body;
 
     const user = await prisma.user.update({
       where: {
-        id: Number(id),
+        id,
       },
       data: {
-        name,
+        ...(name !== undefined && { name }),
+        ...(phone !== undefined && { phone }),
+        ...(birthDate !== undefined && {
+          birthDate: birthDate ? new Date(birthDate) : null,
+        }),
+        ...(gender !== undefined && { gender }),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        birthDate: true,
+        gender: true,
+        createdAt: true,
       },
     });
 
     return res.json({
-      message: "Updated",
+      message: "User updated successfully",
       user,
     });
   } catch (err) {
     console.error(err);
 
     return res.status(500).json({
-      error: "Update failed",
+      error: "Failed to update user",
     });
   }
 };

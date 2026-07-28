@@ -7,6 +7,7 @@ import {
 } from "../controllers/paymentController";
 
 import { authMiddleware } from "../middleware/authMiddleware";
+import { internalMiddleware } from "../internalMiddleware";
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ const router = express.Router();
 router.post("/webhook", midtransWebhook);
 
 // 🔥 semua payment harus login
+router.use(internalMiddleware);
 router.use(authMiddleware);
 
 router.post("/", createPayment);

@@ -5,6 +5,14 @@ import "dotenv/config";
 
 const HOUSE_SERVICE_URL = process.env.HOUSE_SERVICE_URL!;
 
+const getInternalHeaders = () => {
+  const token = process.env.INTERNAL_SERVICE_TOKEN;
+
+  if (!token) throw new Error("INTERNAL_SERVICE_TOKEN must be configured");
+
+  return { "x-internal-token": token };
+};
+
 export const addFavoriteHouse = async (req: Request, res: Response) => {
   try {
     const userId = Number(req.headers["x-user-id"]);
@@ -45,7 +53,9 @@ export const addFavoriteHouse = async (req: Request, res: Response) => {
       }
 
       // validasi house exists
-      await axios.get(`${HOUSE_SERVICE_URL}/houses/${houseId}`);
+      await axios.get(`${HOUSE_SERVICE_URL}/houses/${houseId}`, {
+        headers: getInternalHeaders(),
+      });
 
       // create favorite
       const favorite = await prisma.favoriteHouse.create({

@@ -4,15 +4,27 @@ import axios from "axios";
 const HOUSE_SERVICE_URL = process.env.HOUSE_SERVICE_URL!;
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL!;
 
+const getInternalHeaders = () => {
+  const token = process.env.INTERNAL_SERVICE_TOKEN;
+
+  if (!token) throw new Error("INTERNAL_SERVICE_TOKEN must be configured");
+
+  return { "x-internal-token": token };
+};
+
 export const searchHouses = async (req: Request, res: Response) => {
   try {
     const { priceMin, priceMax, bedrooms, location, sortBy } = req.query;
 
     // GET HOUSE
-    const houseResponse = await axios.get(`${HOUSE_SERVICE_URL}/houses`);
+    const houseResponse = await axios.get(`${HOUSE_SERVICE_URL}/houses`, {
+      headers: getInternalHeaders(),
+    });
 
     // GET BOOKING
-    const bookingResponse = await axios.get(`${USER_SERVICE_URL}/bookings`);
+    const bookingResponse = await axios.get(`${USER_SERVICE_URL}/bookings`, {
+      headers: getInternalHeaders(),
+    });
 
     let houses = houseResponse.data;
     const bookings = bookingResponse.data;

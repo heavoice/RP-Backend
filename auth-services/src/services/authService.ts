@@ -4,6 +4,14 @@ import { generateToken, generateRefreshToken } from "../utils/jwt";
 import "dotenv/config";
 
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL!; // 🔥 HARDCODE DULU BUAT DEBUG
+
+const getInternalHeaders = () => {
+  const token = process.env.INTERNAL_SERVICE_TOKEN;
+
+  if (!token) throw new Error("INTERNAL_SERVICE_TOKEN must be configured");
+
+  return { "x-internal-token": token };
+};
 console.log("USER_SERVICE_URL:", USER_SERVICE_URL);
 
 export const loginService = async (email: string, password: string) => {
@@ -16,6 +24,7 @@ export const loginService = async (email: string, password: string) => {
     const res = await axios.get(`${USER_SERVICE_URL}/findByEmail`, {
       params: { email }, // 🔥 JANGAN pakai query string manual
       timeout: 5000, // 🔥 WAJIB biar ga hang
+      headers: getInternalHeaders(),
     });
 
     console.log("✅ USER SERVICE RESPONSE RECEIVED");

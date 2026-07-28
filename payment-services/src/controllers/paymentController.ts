@@ -6,6 +6,14 @@ const prisma = new PrismaClient();
 const USER_SERVICE_URL = process.env.USER_SERVICE_URL;
 const midtransClient = require("midtrans-client");
 
+const getInternalHeaders = () => {
+  const token = process.env.INTERNAL_SERVICE_TOKEN;
+
+  if (!token) throw new Error("INTERNAL_SERVICE_TOKEN must be configured");
+
+  return { "x-internal-token": token };
+};
+
 const snap = new midtransClient.Snap({
   isProduction: process.env.MIDTRANS_IS_PRODUCTION === "true",
   serverKey: process.env.MIDTRANS_SERVER_KEY,
@@ -120,6 +128,9 @@ export const midtransWebhook = async (req: Request, res: Response) => {
           {
             paidAt,
           },
+          {
+            headers: getInternalHeaders(),
+          },
         );
 
         console.log("BOOKING RESPONSE");
@@ -197,6 +208,9 @@ export const createPayment = async (req: Request, res: Response) => {
     try {
       const bookingRes = await axios.get(
         `${USER_SERVICE_URL}/bookings/${bookingId}`,
+        {
+          headers: getInternalHeaders(),
+        },
       );
 
       booking = bookingRes.data;
@@ -251,6 +265,7 @@ export const createPayment = async (req: Request, res: Response) => {
     const bookingRes = await axios.get(`${USER_SERVICE_URL}/bookings/me`, {
       headers: {
         "x-user-id": userId,
+        ...getInternalHeaders(),
       },
     });
 

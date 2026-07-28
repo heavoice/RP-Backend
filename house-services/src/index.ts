@@ -2,12 +2,14 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import houseRoutes from "./routes/houseRoutes";
+import { internalMiddleware } from "./internalMiddleware";
 
 const app = express();
 const PORT = process.env.PORT;
 
 app.use(cors());
 app.use(express.json());
+app.use(internalMiddleware);
 
 app.use("/houses", houseRoutes);
 

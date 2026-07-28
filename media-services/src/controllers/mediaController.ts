@@ -10,7 +10,7 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export const uploadMedia = async (req: Request, res: Response) => {
+export const uploadHouseMedia = async (req: Request, res: Response) => {
   try {
     const file = req.file;
 
@@ -20,50 +20,26 @@ export const uploadMedia = async (req: Request, res: Response) => {
       });
     }
 
-    const houseId = req.body.houseId ? Number(req.body.houseId) : null;
-
-    const userId = req.body.userId ? Number(req.body.userId) : null;
-
-    // VALIDATION
-
-    if ((!houseId && !userId) || (houseId && userId)) {
+    // Route ini TIDAK BOLEH menerima userId
+    if (req.body.userId) {
       return res.status(400).json({
-        error: "Provide either houseId or userId",
+        error: "userId is not allowed for house upload",
       });
     }
 
-    // USER PROFILE
+    const houseId = Number(req.body.houseId);
 
-    if (userId) {
-      const oldMedia = await prisma.media.findFirst({
-        where: {
-          userId,
-        },
+    if (!houseId) {
+      return res.status(400).json({
+        error: "houseId is required",
       });
-
-      if (oldMedia) {
-        try {
-          await cloudinary.v2.uploader.destroy(oldMedia.publicId);
-        } catch (err) {
-          console.error("Failed deleting old Cloudinary image", err);
-        }
-
-        await prisma.media.delete({
-          where: {
-            id: oldMedia.id,
-          },
-        });
-      }
     }
 
-    // UPLOAD TO CLOUDINARY
     const uploadResult = await new Promise<cloudinary.UploadApiResponse>(
       (resolve, reject) => {
         const stream = cloudinary.v2.uploader.upload_stream(
           {
-            folder: userId
-              ? "rumah-prediksi/profiles"
-              : "rumah-prediksi/houses",
+            folder: "rumah-prediksi/houses",
           },
           (error, result) => {
             if (result) resolve(result);
@@ -75,26 +51,116 @@ export const uploadMedia = async (req: Request, res: Response) => {
       },
     );
 
-    // SAVE DATABASE
     const media = await prisma.media.create({
       data: {
         url: uploadResult.secure_url,
         publicId: uploadResult.public_id,
         houseId,
-        userId,
+        userId: null,
       },
     });
 
     return res.status(201).json({
       mediaId: media.id,
       url: media.url,
-      message: "Media uploaded successfully",
+      message: "House image uploaded successfully",
     });
   } catch (err) {
-    console.error("Upload error:", err);
+    console.error(err);
 
     return res.status(500).json({
-      error: "Failed to upload media",
+      error: "Failed to upload house image",
+    });
+  }
+};
+
+export const uploadProfileMedia = async (req: Request, res: Response) => {
+  try {
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        error: "No image file provided",
+      });
+    }
+
+    // Route ini TIDAK BOLEH menerima houseId
+    if (req.body.houseId) {
+      return res.status(400).json({
+        error: "houseId is not allowed for profile upload",
+      });
+    }
+
+    const authenticatedUserId = Number(req.headers["x-user-id"]);
+
+    if (!authenticatedUserId) {
+      return res.status(401).json({
+        error: "Unauthorized",
+      });
+    }
+
+    // Tidak boleh upload ke akun lain
+    if (req.body.userId && Number(req.body.userId) !== authenticatedUserId) {
+      return res.status(403).json({
+        error: "Forbidden",
+      });
+    }
+
+    const oldMedia = await prisma.media.findFirst({
+      where: {
+        userId: authenticatedUserId,
+      },
+    });
+
+    if (oldMedia) {
+      try {
+        await cloudinary.v2.uploader.destroy(oldMedia.publicId);
+      } catch (err) {
+        console.error("Failed deleting old image:", err);
+      }
+
+      await prisma.media.delete({
+        where: {
+          id: oldMedia.id,
+        },
+      });
+    }
+
+    const uploadResult = await new Promise<cloudinary.UploadApiResponse>(
+      (resolve, reject) => {
+        const stream = cloudinary.v2.uploader.upload_stream(
+          {
+            folder: "rumah-prediksi/profiles",
+          },
+          (error, result) => {
+            if (result) resolve(result);
+            else reject(error);
+          },
+        );
+
+        stream.end(file.buffer);
+      },
+    );
+
+    const media = await prisma.media.create({
+      data: {
+        url: uploadResult.secure_url,
+        publicId: uploadResult.public_id,
+        userId: authenticatedUserId,
+        houseId: null,
+      },
+    });
+
+    return res.status(201).json({
+      mediaId: media.id,
+      url: media.url,
+      message: "Profile image uploaded successfully",
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      error: "Failed to upload profile image",
     });
   }
 };

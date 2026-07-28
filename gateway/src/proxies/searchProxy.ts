@@ -1,5 +1,6 @@
 import express from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import { getInternalServiceToken } from "../utils/internalToken";
 
 const searchProxy = [
   express.json(),
@@ -17,6 +18,7 @@ const searchProxy = [
 
     on: {
       proxyReq: (proxyReq, req: any) => {
+        proxyReq.setHeader("x-internal-token", getInternalServiceToken());
         console.log("🏠 SEARCH PROXY:", req.method, req.originalUrl);
 
         // FORWARD USER ID

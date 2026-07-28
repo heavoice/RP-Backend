@@ -1,5 +1,6 @@
 import express from "express";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import { getInternalServiceToken } from "../utils/internalToken";
 
 const userProxy = [
   express.json(),
@@ -13,6 +14,7 @@ const userProxy = [
 
     on: {
       proxyReq: (proxyReq, req: any) => {
+        proxyReq.setHeader("x-internal-token", getInternalServiceToken());
         console.log("➡️ USER PROXY:", req.method, req.originalUrl);
         console.log("REQ USER:", req.user);
         console.log("FINAL USER ID:", req.user);

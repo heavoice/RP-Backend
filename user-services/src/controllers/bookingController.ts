@@ -5,6 +5,14 @@ import "dotenv/config";
 
 const HOUSE_SERVICE_URL = process.env.HOUSE_SERVICE_URL!;
 
+const getInternalHeaders = () => {
+  const token = process.env.INTERNAL_SERVICE_TOKEN;
+
+  if (!token) throw new Error("INTERNAL_SERVICE_TOKEN must be configured");
+
+  return { "x-internal-token": token };
+};
+
 // ✅ CREATE BOOKING
 export const createBooking = async (req: Request, res: Response) => {
   try {
@@ -30,7 +38,9 @@ export const createBooking = async (req: Request, res: Response) => {
     }
 
     // cek house exists (MS call)
-    const houseRes = await axios.get(`${HOUSE_SERVICE_URL}/houses/${houseId}`);
+    const houseRes = await axios.get(`${HOUSE_SERVICE_URL}/houses/${houseId}`, {
+      headers: getInternalHeaders(),
+    });
 
     const house = houseRes.data;
 

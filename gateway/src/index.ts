@@ -9,14 +9,19 @@ import { authMiddleware } from "./middleware/authMiddleware";
 import searchProxy from "./proxies/searchProxy";
 import paymentProxy from "./proxies/paymentProxy";
 import mediaProxy from "./proxies/mediaProxy";
+import { getInternalServiceToken } from "./utils/internalToken";
 
 const app = express();
+
+// Gateway is the only public entry point. Fail closed if it cannot prove its
+// identity to downstream services.
+getInternalServiceToken();
 
 app.use(
   cors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
