@@ -26,10 +26,11 @@ export const register = async (req: Request, res: Response) => {
         phone,
         birthDate: birthDate ? new Date(birthDate) : null,
         gender: mapGender(gender) ?? null,
+        role: "USER", // default role
       },
     });
 
-    res.json({
+    return res.status(201).json({
       id: user.id,
       name: user.name,
       email: user.email,
@@ -40,7 +41,10 @@ export const register = async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Register failed" });
+
+    return res.status(500).json({
+      error: "Register failed",
+    });
   }
 };
 
@@ -52,11 +56,15 @@ export const findByEmail = async (req: Request, res: Response) => {
     const { email } = req.query;
 
     const user = await prisma.user.findUnique({
-      where: { email: email as string },
+      where: {
+        email: email as string,
+      },
     });
 
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({
+        error: "User not found",
+      });
     }
 
     return res.json(user);

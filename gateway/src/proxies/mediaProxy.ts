@@ -9,9 +9,7 @@ const mediaProxy = [
     target: process.env.MEDIA_SERVICE_URL,
     changeOrigin: true,
 
-    pathRewrite: (path) => {
-      return path.replace(/^\/media/, "");
-    },
+    pathRewrite: (path) => path.replace(/^\/media/, ""),
 
     proxyTimeout: 5000,
     timeout: 5000,
@@ -19,31 +17,16 @@ const mediaProxy = [
     on: {
       proxyReq: (proxyReq, req: any) => {
         proxyReq.setHeader("x-internal-token", getInternalServiceToken());
-        console.log("🖼️ MEDIA PROXY:", req.method, req.originalUrl);
 
-        // FORWARD USER ID
         if (req.user?.userId) {
-          proxyReq.setHeader("x-user-id", req.user.userId);
+          proxyReq.setHeader("x-user-id", String(req.user.userId));
         }
 
-        // FORWARD BODY
-        if (req.body && Object.keys(req.body).length > 0) {
-          const bodyData = JSON.stringify(req.body);
-
-          proxyReq.setHeader("Content-Type", "application/json");
-          proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
-
-          proxyReq.write(bodyData);
-          proxyReq.end();
+        if (req.user?.role) {
+          proxyReq.setHeader("x-user-role", req.user.role);
         }
-      },
 
-      proxyRes: () => {
-        console.log("✅ Response from media-service");
-      },
-
-      error: (err) => {
-        console.error("❌ Media Proxy Error:", err);
+        // ❌ JANGAN write body di media proxy
       },
     },
   }),

@@ -33,6 +33,11 @@ enum PaymentMethod {
   CASH
 }
 
+enum Role {
+  USER
+  DEVELOPER
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   name      String
@@ -41,6 +46,7 @@ model User {
   phone     String?
   birthDate DateTime?
   gender    Gender?
+  role       Role     @default(USER)
   createdAt DateTime @default(now())
 
   favorites FavoriteHouse[]

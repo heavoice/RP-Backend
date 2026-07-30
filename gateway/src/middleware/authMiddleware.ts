@@ -10,16 +10,13 @@ export const authMiddleware = async (
   next: NextFunction,
 ) => {
   try {
-    // ✅ PUBLIC ROUTES
+    // Public routes
     const publicRoutes = ["/register", "/login"];
 
-    const isPublic = publicRoutes.some((route) => req.path.startsWith(route));
-
-    if (isPublic) {
+    if (publicRoutes.some((route) => req.path.startsWith(route))) {
       return next();
     }
 
-    // ✅ CHECK AUTH HEADER
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
@@ -28,7 +25,6 @@ export const authMiddleware = async (
       });
     }
 
-    // ✅ EXTRACT TOKEN
     const token = authHeader.split(" ")[1];
 
     if (!token) {
@@ -37,10 +33,8 @@ export const authMiddleware = async (
       });
     }
 
-    console.log("🔐 TOKEN CHECK:", token);
-
-    // ✅ VERIFY TOKEN VIA AUTH SERVICE
-    const response = await axios.post(
+    // Verify JWT ke Auth Service
+    const { data } = await axios.post(
       `${AUTH_SERVICE_URL}/verify`,
       { token },
       {
@@ -50,30 +44,30 @@ export const authMiddleware = async (
       },
     );
 
-    // ✅ EXTRACT USER ID
-    const userId = response.data.userId || response.data.data?.userId;
+    if (!data.valid) {
+      return res.status(401).json({
+        error: "Invalid token",
+      });
+    }
 
-    if (!userId) {
+    if (!data.userId || !data.role) {
       return res.status(401).json({
         error: "Invalid token payload",
       });
     }
 
-    // ✅ SAVE USER CONTEXT
+    // Simpan user context
     req.user = {
-      userId,
+      userId: data.userId,
+      role: data.role,
     };
 
-    // 🔥 VERY IMPORTANT PROPAGATE IDENTITY TO DOWNSTREAM SERVICES
-    req.headers["x-user-id"] = String(userId);
+    // Forward identity ke service lain
+    req.headers["x-user-id"] = String(data.userId);
+    req.headers["x-user-role"] = data.role;
 
     return next();
-  } catch (err: any) {
-    console.error(
-      "❌ Auth middleware error:",
-      err?.response?.data || err.message,
-    );
-
+  } catch {
     return res.status(401).json({
       error: "Unauthorized",
     });

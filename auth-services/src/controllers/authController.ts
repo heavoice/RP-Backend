@@ -3,29 +3,34 @@ import { loginService } from "../services/authService";
 import { verifyToken, generateToken } from "../utils/jwt";
 
 export const login = async (req: Request, res: Response) => {
-  console.log("🔥 LOGIN CONTROLLER HIT");
   try {
     const { email, password } = req.body;
-    console.log("LOGIN BODY:", req.body);
 
     const result = await loginService(email, password);
 
-    res.json(result);
+    return res.json(result);
   } catch (err: any) {
-    res.status(401).json({ error: err.message });
+    return res.status(401).json({
+      error: err.message,
+    });
   }
 };
 
 export const verify = (req: Request, res: Response) => {
   try {
     const { token } = req.body;
-    console.log("TOKEN:", token);
-    const decoded = verifyToken(token);
 
-    res.json({ valid: true, userId: (decoded as any).userId });
-    console.log("DECODED:", decoded);
+    const decoded = verifyToken(token) as any;
+
+    return res.json({
+      valid: true,
+      userId: decoded.userId,
+      role: decoded.role,
+    });
   } catch {
-    res.status(401).json({ valid: false });
+    return res.status(401).json({
+      valid: false,
+    });
   }
 };
 
@@ -33,12 +38,19 @@ export const refresh = (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
 
-    const decoded = verifyToken(refreshToken);
+    const decoded = verifyToken(refreshToken) as any;
 
-    const newToken = generateToken({ userId: (decoded as any).userId });
+    const newToken = generateToken({
+      userId: decoded.userId,
+      role: decoded.role,
+    });
 
-    res.json({ token: newToken });
+    return res.json({
+      token: newToken,
+    });
   } catch {
-    res.status(401).json({ error: "Invalid refresh token" });
+    return res.status(401).json({
+      error: "Invalid refresh token",
+    });
   }
 };
